@@ -1,0 +1,64 @@
+# ============================================================================
+# PIPED GOOGLE DRIVE TRANSCRIPTION PIPELINE - DEPENDENCIES
+# ============================================================================
+# This file contains all dependencies for the entire pipeline.
+# Install with: pip install -r requirements.txt
+# ============================================================================
+
+# ============================================================================
+# CORE DEPENDENCIES
+# ============================================================================
+# Configuration and environment support
+python-dotenv>=1.0.0
+
+# ============================================================================
+# GOOGLE DRIVE API DEPENDENCIES
+# ============================================================================
+# Google Drive API client libraries
+google-api-python-client==2.108.0
+google-auth-httplib2==0.1.1
+google-auth-oauthlib==1.1.0
+google-auth==2.23.4
+
+# ============================================================================
+# DATABASE DEPENDENCIES
+# ============================================================================
+# PostgreSQL database adapter
+psycopg2-binary>=2.9.0
+
+# ============================================================================
+# OPENAI API DEPENDENCIES
+# ============================================================================
+# OpenAI API client for transcription services
+openai>=1.40,<2.0
+
+# ============================================================================
+# TEXT PROCESSING DEPENDENCIES
+# ============================================================================
+# Microsoft Word document processing
+python-docx>=1.0.0
+
+# PDF document processing
+PyPDF2>=3.0.0
+
+# ============================================================================
+# DEVELOPMENT DEPENDENCIES (OPTIONAL)
+# ============================================================================
+# Code formatting and linting
+# black>=23.0.0
+# flake8>=6.0.0
+# mypy>=1.0.0
+
+# Testing framework
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+
+# ============================================================================
+# NOTES
+# ============================================================================
+# 1. psycopg2-binary is used for development; use psycopg2 for production
+# 2. All version constraints use >= for flexibility
+# 3. Development dependencies are commented out by default
+# 4. Install development dependencies separately if needed:
+#    pip install black flake8 mypy pytest pytest-cov
+# ============================================================================
