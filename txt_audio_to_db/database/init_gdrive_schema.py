@@ -23,8 +23,8 @@ from typing import Optional
 if __name__ == "__main__":
     # Get the directory containing this script
     script_dir = Path(__file__).resolve().parent
-    # Navigate to project root (1 level up: database -> project_root)
-    project_root = script_dir.parent
+    # Navigate to project root (2 levels up: database -> txt_audio_to_db -> project_root)
+    project_root = script_dir.parent.parent
     # Add project root to sys.path if not already there
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
