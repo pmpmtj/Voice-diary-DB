@@ -39,7 +39,7 @@ class ProjectConfig:
     """
     
     # Default values
-    download_dir: str = r"C:\Users\pmpmt\Scripts_Cursor\downloads"
+    download_dir: str = r"C:\Users\pmpmt\Scripts_Cursor\pmpmtj_personal_diary\downloads"
     
     def __post_init__(self):
         """Load settings from environment variables and .env file."""
