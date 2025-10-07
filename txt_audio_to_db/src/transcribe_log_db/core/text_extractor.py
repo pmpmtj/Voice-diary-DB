@@ -30,7 +30,7 @@ def extract_text_content(file_path: Path) -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: Structured data containing:
             - text: Extracted text content
-            - title: First line of text (truncated to 255 chars)
+            - title: Filename without extension (truncated to 255 chars)
             - source_file: File path as string
             - file_type: File extension
             
@@ -151,10 +151,8 @@ def _extract_pdf_content(file_path: Path) -> Dict[str, Any]:
 
 def _create_extraction_result(file_path: Path, text: str, file_type: str) -> Dict[str, Any]:
     """Create standardized extraction result dictionary."""
-    # Extract title from first line (up to 255 characters)
-    lines = text.strip().split('\n')
-    first_line = lines[0].strip() if lines else ""
-    title = first_line[:255] if first_line else file_path.stem
+    # Extract title from filename (without extension), truncated to 255 characters
+    title = file_path.stem[:255]
     
     return {
         "text": text,

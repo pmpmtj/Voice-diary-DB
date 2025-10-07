@@ -389,7 +389,7 @@ class TranscriptionIngestion:
         
         Args:
             response_data (Union[str, Dict]): Transcription response data
-            title (Optional[str]): Diary entry title
+            title (Optional[str]): Diary entry title. If not provided, will extract from source_file filename
             mood (Optional[str]): Diary entry mood
             tags (Optional[List[str]]): Diary entry tags
             
@@ -412,6 +412,10 @@ class TranscriptionIngestion:
             source_file_id = None
             if parsed_data['source_file']:
                 source_file_id = self.upsert_source_file(conn, parsed_data['source_file'])
+            
+            # If no title provided, extract from source file
+            if not title and parsed_data.get('source_file'):
+                title = Path(parsed_data['source_file']).stem[:255]
             
             # Insert diary entry
             diary_id = self.insert_diary_entry(conn, parsed_data['text'], title, mood, tags)
