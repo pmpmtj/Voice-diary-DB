@@ -1,5 +1,10 @@
-client_secret.json
-token.json
+# Google OAuth credentials - NEVER commit these!
+**/client_secret.json
+**/token.json
+**/*client_secret*.json
+**/*token*.json
+common/config/google_account/client_secret.json
+common/config/google_account/token.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
