@@ -37,7 +37,7 @@ except ImportError:
     sys.exit(1)
 
 from dl_emails_gmail.config.db_config import DB_CONFIG, get_db_config
-from dl_emails_gmail.logging_utils.logging_config import get_logger
+from common.logging_utils.logging_config import get_logger
 
 # Initialize logger for this module
 logger = get_logger("init_db")

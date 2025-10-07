@@ -80,6 +80,18 @@ LOGGING_CONFIG = {
             "console_output": True,
             "file_output": True
         },
+        "transcribe_audio.transcription": {
+            "file_level": "DEBUG",
+            "log_filename": "transcribe_audio.transcription.log",
+            "console_output": True,
+            "file_output": True
+        },
+        "transcribe_audio.language_detection": {
+            "file_level": "DEBUG",
+            "log_filename": "transcribe_audio.language_detection.log",
+            "console_output": True,
+            "file_output": True
+        },
         "main": {
             "file_level": "DEBUG",
             "log_filename": "main.log",
@@ -118,6 +130,46 @@ LOGGING_CONFIG = {
         "transcription": {
             "level": "DEBUG",
             "log_filename": "transcription.log"
+        },
+        # Gmail downloader logger
+        "dl_gmail": {
+            "file_level": "DEBUG",
+            "log_filename": "dl_gmail.log",
+            "console_output": True,
+            "file_output": True
+        },
+        # Pipeline orchestrator logger
+        "pipeline_orchestrator": {
+            "file_level": "DEBUG",
+            "log_filename": "pipeline_orchestrator.log",
+            "console_output": True,
+            "file_output": True
+        },
+        # Gmail database loggers
+        "init_db": {
+            "file_level": "DEBUG",
+            "log_filename": "init_db.log",
+            "console_output": True,
+            "file_output": True
+        },
+        "db_utils": {
+            "file_level": "DEBUG",
+            "log_filename": "db_utils.log",
+            "console_output": True,
+            "file_output": True
+        },
+        "db_persistence": {
+            "file_level": "DEBUG",
+            "log_filename": "db_persistence.log",
+            "console_output": True,
+            "file_output": True
+        },
+        # GDrive database logger
+        "init_gdrive_db": {
+            "file_level": "DEBUG",
+            "log_filename": "init_gdrive_db.log",
+            "console_output": True,
+            "file_output": True
         }
     },
     "strict_config": False  # if True, unknown logger names raise an error

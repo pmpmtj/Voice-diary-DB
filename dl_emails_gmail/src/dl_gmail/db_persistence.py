@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
 from .db_utils import get_db_connection, execute_insert, execute_query, record_exists, DatabaseError, execute_update
 from .models import MessageData, AttachmentData
-from dl_emails_gmail.logging_utils.logging_config import get_logger
+from common.logging_utils.logging_config import get_logger
 
 # Initialize logger for this module
 logger = get_logger("db_persistence")

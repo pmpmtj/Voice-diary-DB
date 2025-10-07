@@ -14,14 +14,7 @@ Usage:
     custom_logger = get_logger("dl_gmail.custom_module")
 """
 
-import sys
-from pathlib import Path
-
-# Add the project root to the path to import logging_utils
-project_root = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-from dl_emails_gmail.logging_utils.logging_config import get_logger as _get_logger
+from common.logging_utils.logging_config import get_logger as _get_logger
 
 # Module logger name
 MODULE_LOGGER_NAME = "dl_gmail"

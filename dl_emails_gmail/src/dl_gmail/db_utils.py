@@ -35,7 +35,7 @@ if __name__ == "__main__":
         sys.path.insert(0, str(project_root))
 
 from dl_emails_gmail.config.db_config import DB_CONFIG
-from dl_emails_gmail.logging_utils.logging_config import get_logger
+from common.logging_utils.logging_config import get_logger
 
 # Initialize logger for this module
 logger = get_logger("db_utils")

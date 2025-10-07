@@ -1,7 +1,7 @@
 # Universal Logging System
 
 This directory contains a universal logging configuration system that provides centralized logging management with log rotation for any Python project.
-
+ 
 ## Features
 
 - **Universal Configuration**: Works for any Python project, not just specific ones
