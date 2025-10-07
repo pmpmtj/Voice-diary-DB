@@ -166,40 +166,27 @@ def get_project_root() -> Path:
 
 def get_script_directory() -> Path:
     """
-    Get the directory containing the main script.
+    Get the project root directory for consistent base path resolution.
     
-    This function provides reliable script directory detection for both regular
-    Python execution and PyInstaller frozen applications. It ensures consistent
-    behavior across different deployment scenarios.
-    
-    Detection logic:
-    - For PyInstaller frozen apps: Uses sys.executable parent directory
-    - For regular Python scripts: Uses __file__ parent directory
+    This function returns the project root directory to ensure all modules
+    use the same base directory for resolving relative paths. This provides
+    consistent behavior across different deployment scenarios.
     
     Returns:
-        Path: Path object pointing to the script directory
+        Path: Path object pointing to the project root directory
         
     Raises:
-        OSError: If the script directory cannot be determined
+        OSError: If the project root directory cannot be determined
         
     Example:
         >>> get_script_directory()
-        PosixPath('/path/to/script/directory')
+        PosixPath('/path/to/project/root')
         
     Note:
-        This function is essential for resolving relative paths in the application,
-        especially when running as a frozen executable or from different working
-        directories.
+        This function is essential for resolving relative paths consistently
+        across all modules in the application.
     """
-    try:
-        if getattr(sys, 'frozen', False):
-            # Running as PyInstaller bundle
-            return Path(sys.executable).parent
-        else:
-            # Running as regular Python script
-            return Path(__file__).resolve().parent.parent
-    except Exception as e:
-        raise OSError(f"Failed to determine script directory: {e}")
+    return get_project_root()
 
 
 def sanitize_filename(filename: str) -> str:

@@ -36,7 +36,7 @@ Date: [Current Date]
 Version: 1.0.0
 """
 
-from .file_sys_utils import resolve_path, ensure_directory, get_script_directory, sanitize_filename
+from common.utils.file_sys_utils import resolve_path, ensure_directory, get_script_directory, sanitize_filename
 
 __all__ = [
     "resolve_path",

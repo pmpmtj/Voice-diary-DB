@@ -37,14 +37,15 @@ from pathlib import Path
 from datetime import datetime
 
 from dl_emails_gmail.config.dl_gmail_config import CONFIG
-from dl_emails_gmail.utils.file_sys_utils import resolve_path
+from common.utils.file_sys_utils import resolve_path
 from .gmail_logging import logger
 
 
-# Gmail API scopes
+# Combined API scopes for both Gmail and Google Drive
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
-    'https://www.googleapis.com/auth/gmail.modify'
+    'https://www.googleapis.com/auth/gmail.modify',
+    'https://www.googleapis.com/auth/drive'
 ]
 
 
