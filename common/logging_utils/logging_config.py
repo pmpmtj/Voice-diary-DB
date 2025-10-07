@@ -115,9 +115,9 @@ LOGGING_CONFIG = {
             "level": "DEBUG",
             "log_filename": "audio_finder.log"
         },
-        "db_manager": {
+        "db_utils": {
             "level": "DEBUG",
-            "log_filename": "db_manager.log"
+            "log_filename": "db_utils.log"
         },
         "transcription_ingestion": {
             "level": "DEBUG",

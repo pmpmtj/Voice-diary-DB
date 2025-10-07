@@ -52,7 +52,7 @@ class DatabaseManager:
     
     def __init__(self):
         """Initialize the database manager with configuration."""
-        self.logger = get_logger("db_manager")
+        self.logger = get_logger("db_utils")
         self.db_config = DB_CONFIG
         self._connection_pool = None
         

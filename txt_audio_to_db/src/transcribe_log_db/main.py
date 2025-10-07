@@ -2,20 +2,22 @@
 Main Application Entry Point
 
 This module provides the main entry point for the transcription logging application.
-It demonstrates how to initialize the database and ingest transcription responses
-into the normalized schema.
+It ingests transcription responses into the normalized database schema.
 
 Key Features:
-- Database initialization with schema creation
 - Transcription ingestion from JSON responses
 - Command-line interface for testing and demonstration
 - Comprehensive logging and error handling
+- Batch processing of audio and text files
 
 Usage:
     python -m transcribe_log_db.main
     
     Or with a JSON file:
     python -m transcribe_log_db.main --input example_output.json
+
+Note: Database schema must be initialized separately using:
+    python txt_audio_to_db/database/init_gdrive_schema.py
 
 Author: [Your Name]
 Date: [Current Date]
@@ -49,24 +51,6 @@ try:
     from ..transcribe_audio.core.transcription import transcribe_audio  # type: ignore
 except Exception:  # pragma: no cover
     transcribe_audio = None
-
-
-def initialize_database(db_manager) -> None:
-    """
-    Initialize the database with the schema.
-    
-    Args:
-        db_manager: Database manager instance
-    """
-    logger = get_logger("main")
-    logger.info("Initializing database...")
-    
-    try:
-        db_manager.initialize_database()
-        logger.info("Database initialized successfully")
-    except Exception as e:
-        logger.error(f"Failed to initialize database: {e}")
-        raise
 
 
 def ingest_from_file(ingestion_handler, file_path: Path, 
@@ -263,11 +247,6 @@ Examples:
         help='Tags for the diary entry (space-separated)'
     )
     
-    parser.add_argument(
-        '--init-only',
-        action='store_true',
-        help='Only initialize the database, do not ingest data'
-    )
     
     parser.add_argument(
         '--audio-dir',
@@ -309,13 +288,6 @@ Examples:
         # Initialize database manager
         db_manager = get_db_manager()
         logger.info("Database manager initialized")
-        
-        # Initialize database schema
-        initialize_database(db_manager)
-        
-        if args.init_only:
-            logger.info("Database initialization completed. Exiting.")
-            return
         
         # Initialize ingestion handler
         ingestion_handler = get_transcription_ingestion()
