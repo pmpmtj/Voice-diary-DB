@@ -88,8 +88,8 @@ class GdriveConfig:
     
     # Search and API settings
     search_folders: List[str] = field(default_factory=lambda: ["root"])
-    client_secret_file: str = "dl_src_gdrive/config/client_secret.json"
-    token_file: str = "dl_src_gdrive/config/token.json"
+    client_secret_file: str = "common/config/google_account/client_secret.json"
+    token_file: str = "common/config/google_account/token.json"
     scopes: List[str] = field(default_factory=lambda: ['https://www.googleapis.com/auth/drive'])
     
     # File extension settings

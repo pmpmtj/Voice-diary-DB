@@ -345,13 +345,22 @@ class PipelineOrchestrator:
                 error_message = None
             else:
                 # Import and run Gmail downloader
-                from dl_emails_gmail.src.dl_gmail.dl_gmail import main as gmail_main
+                from dl_emails_gmail.src.dl_gmail.dl_gmail import process_gmail_messages
+                from dl_emails_gmail.src.dl_gmail.gmail_client import build_gmail_service
                 
                 try:
-                    gmail_main()
-                    success_count = 1
-                    total_count = 1
+                    # Try to build the Gmail service first to catch credential errors early
+                    service = build_gmail_service()
+                    messages = process_gmail_messages()
+                    
+                    success_count = len(messages) if messages else 0
+                    total_count = len(messages) if messages else 1
                     error_message = None
+                        
+                except FileNotFoundError as e:
+                    success_count = 0
+                    total_count = 1
+                    error_message = f"Gmail download failed: Missing credentials file - {e}"
                 except Exception as e:
                     success_count = 0
                     total_count = 1
@@ -364,7 +373,7 @@ class PipelineOrchestrator:
                 self.logger.error(f"Gmail download phase failed: {error_message}")
             else:
                 status = PipelineStatus.COMPLETED
-                self.logger.info(f"Gmail download phase completed")
+                self.logger.info(f"Gmail download phase completed: {success_count}/{total_count} messages")
             
             self.phase_status[PipelinePhase.GMAIL_DOWNLOAD] = status
             
