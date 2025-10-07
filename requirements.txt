@@ -62,3 +62,7 @@ PyPDF2>=3.0.0
 # 4. Install development dependencies separately if needed:
 #    pip install black flake8 mypy pytest pytest-cov
 # ============================================================================
+
+python-dateutil==2.9.0.post0
+tenacity==9.0.0
+requests
