@@ -47,6 +47,7 @@ from common.config.proj_config import PROJ_CONFIG
 
 class PipelinePhase(Enum):
     """Pipeline execution phases."""
+    GMAIL_DOWNLOAD = "gmail_download"
     DOWNLOAD = "download"
     PROCESS = "process"
     INGEST = "ingest"
@@ -132,6 +133,14 @@ class PipelineOrchestrator:
         self.start_time = time.time()
         
         try:
+            # Phase 0: Download emails from Gmail
+            gmail_result = self._run_gmail_download_phase()
+            self.results.append(gmail_result)
+            
+            if gmail_result.status == PipelineStatus.FAILED:
+                self.logger.error("Gmail download phase failed, stopping pipeline")
+                return False
+            
             # Phase 1: Download files from Google Drive
             download_result = self._run_download_phase()
             self.results.append(download_result)
@@ -200,6 +209,19 @@ class PipelineOrchestrator:
         self.start_time = time.time()
         
         result = self._run_ingest_phase()
+        self.results.append(result)
+        
+        self.end_time = time.time()
+        self._print_phase_summary(result)
+        
+        return result.status == PipelineStatus.COMPLETED
+    
+    def run_gmail_only(self) -> bool:
+        """Run only the Gmail download phase."""
+        self.logger.info("Running Gmail download phase only")
+        self.start_time = time.time()
+        
+        result = self._run_gmail_download_phase()
         self.results.append(result)
         
         self.end_time = time.time()
@@ -301,6 +323,69 @@ class PipelineOrchestrator:
             
             return PipelineResult(
                 phase=PipelinePhase.DOWNLOAD,
+                status=PipelineStatus.FAILED,
+                success_count=0,
+                total_count=0,
+                error_message=error_message,
+                execution_time=execution_time
+            )
+    
+    def _run_gmail_download_phase(self) -> PipelineResult:
+        """Execute the Gmail download phase."""
+        self.logger.info("Phase 0: Downloading emails from Gmail")
+        self.phase_status[PipelinePhase.GMAIL_DOWNLOAD] = PipelineStatus.RUNNING
+        
+        start_time = time.time()
+        
+        try:
+            if self.dry_run:
+                self.logger.info("DRY RUN: Would download emails from Gmail")
+                success_count = 0
+                total_count = 0
+                error_message = None
+            else:
+                # Import and run Gmail downloader
+                from dl_emails_gmail.src.dl_gmail.dl_gmail import main as gmail_main
+                
+                try:
+                    gmail_main()
+                    success_count = 1
+                    total_count = 1
+                    error_message = None
+                except Exception as e:
+                    success_count = 0
+                    total_count = 1
+                    error_message = f"Gmail download failed: {e}"
+            
+            execution_time = time.time() - start_time
+            
+            if error_message:
+                status = PipelineStatus.FAILED
+                self.logger.error(f"Gmail download phase failed: {error_message}")
+            else:
+                status = PipelineStatus.COMPLETED
+                self.logger.info(f"Gmail download phase completed")
+            
+            self.phase_status[PipelinePhase.GMAIL_DOWNLOAD] = status
+            
+            return PipelineResult(
+                phase=PipelinePhase.GMAIL_DOWNLOAD,
+                status=status,
+                success_count=success_count,
+                total_count=total_count,
+                error_message=error_message,
+                execution_time=execution_time
+            )
+            
+        except Exception as e:
+            execution_time = time.time() - start_time
+            error_message = f"Gmail download phase failed with exception: {e}"
+            self.logger.error(error_message)
+            
+            self.phase_status[PipelinePhase.GMAIL_DOWNLOAD] = PipelineStatus.FAILED
+            
+            return PipelineResult(
+                phase=PipelinePhase.GMAIL_DOWNLOAD,
                 status=PipelineStatus.FAILED,
                 success_count=0,
                 total_count=0,
@@ -482,7 +567,10 @@ Examples:
     # Run complete pipeline
     python pipeline_orchestrator.py --full-pipeline
     
-    # Run only download phase
+    # Run only Gmail download phase
+    python pipeline_orchestrator.py --gmail-only
+    
+    # Run only Google Drive download phase
     python pipeline_orchestrator.py --download-only
     
     # Run only process phase
@@ -504,12 +592,17 @@ Examples:
     mode_group.add_argument(
         '--full-pipeline',
         action='store_true',
-        help='Run the complete pipeline: download → process → ingest'
+        help='Run the complete pipeline: gmail -> download -> process -> ingest'
+    )
+    mode_group.add_argument(
+        '--gmail-only',
+        action='store_true',
+        help='Run only the Gmail download phase'
     )
     mode_group.add_argument(
         '--download-only',
         action='store_true',
-        help='Run only the download phase'
+        help='Run only the Google Drive download phase'
     )
     mode_group.add_argument(
         '--process-only',
@@ -554,6 +647,8 @@ Examples:
         # Execute based on mode
         if args.full_pipeline:
             success = orchestrator.run_full_pipeline()
+        elif args.gmail_only:
+            success = orchestrator.run_gmail_only()
         elif args.download_only:
             success = orchestrator.run_download_only()
         elif args.process_only:

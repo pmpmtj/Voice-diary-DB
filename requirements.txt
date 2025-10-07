@@ -12,9 +12,9 @@
 python-dotenv>=1.0.0
 
 # ============================================================================
-# GOOGLE DRIVE API DEPENDENCIES
+# GOOGLE API DEPENDENCIES
 # ============================================================================
-# Google Drive API client libraries
+# Google API client libraries (Drive + Gmail)
 google-api-python-client==2.108.0
 google-auth-httplib2==0.1.1
 google-auth-oauthlib==1.1.0
