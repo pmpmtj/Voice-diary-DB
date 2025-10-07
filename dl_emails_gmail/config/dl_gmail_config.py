@@ -87,7 +87,7 @@ class AuthConfig:
     
     # Path to Google OAuth2 credentials file (JSON)
     # Download from Google Cloud Console > APIs & Services > Credentials
-    credentials_file: str = "config/client_secret_890800499519-d2bvsnp5bbfqieovpd4fnafacl0hkjaa.apps.googleusercontent.com.json"
+    credentials_file: str = "config/client_secret.json"
     
     # Path to store OAuth2 tokens (auto-generated)
     # Tokens are refreshed automatically when they expire
