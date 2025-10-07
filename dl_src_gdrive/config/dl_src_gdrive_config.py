@@ -107,6 +107,12 @@ class GdriveConfig:
         '.docx',  # Microsoft Word documents
         '.pdf',   # Portable Document Format
     ])
+    # Google Docs MIME types for text processing
+    google_docs_mime_types: List[str] = field(default_factory=lambda: [
+        'application/vnd.google-apps.document',  # Google Docs
+        'application/vnd.google-apps.spreadsheet',  # Google Sheets
+        'application/vnd.google-apps.presentation',  # Google Slides
+    ])
     allowed_other_extensions: List[str] = field(default_factory=lambda: [])
 
     def __post_init__(self):

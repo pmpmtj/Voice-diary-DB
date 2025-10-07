@@ -37,6 +37,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
+import io
 
 from dl_src_gdrive.config.dl_src_gdrive_config import CONFIG
 from common.logging_utils.logging_config import get_logger
@@ -318,18 +319,20 @@ class GoogleDriveDownloader:
     
     def filter_text_files(self, files: List[Dict]) -> List[Dict]:
         """
-        Filter files to only include text files with allowed extensions.
+        Filter files to only include text files with allowed extensions or Google Docs.
         
         This method processes a list of file metadata dictionaries and filters
-        them to include only files with text extensions configured in the
-        application settings (.txt, .docx, .pdf by default).
+        them to include files with text extensions configured in the
+        application settings (.txt, .docx, .pdf by default) or Google Docs files
+        with MIME types like application/vnd.google-apps.document.
         
         The filtering process:
         1. Extracts file extension from each file name
         2. Converts extension to lowercase for case-insensitive matching
         3. Checks if extension is in the allowed text extensions list
-        4. Logs detailed information about each file's filtering decision
-        5. Returns only files that match the text extension criteria
+        4. Checks if MIME type is in the Google Docs MIME types list
+        5. Logs detailed information about each file's filtering decision
+        6. Returns only files that match the text extension or Google Docs criteria
         
         Args:
             files (List[Dict]): List of file metadata dictionaries from
@@ -337,25 +340,35 @@ class GoogleDriveDownloader:
                                
         Returns:
             List[Dict]: Filtered list containing only text files with
-                       allowed extensions. Each dictionary contains the same
-                       metadata as the input files.
+                       allowed extensions or Google Docs files. Each dictionary 
+                       contains the same metadata as the input files.
                        
         Note:
             The allowed extensions are configured in CONFIG.gdrive.allowed_text_extensions
-            and default to ['.txt', '.docx', '.pdf'].
+            and Google Docs MIME types in CONFIG.gdrive.google_docs_mime_types.
         """
         self.logger.info(f"Filtering files for text extensions: {CONFIG.gdrive.allowed_text_extensions}")
+        self.logger.info(f"Filtering files for Google Docs MIME types: {CONFIG.gdrive.google_docs_mime_types}")
         
         text_files = []
         for file in files:
             file_name = file.get('name', '')
             file_ext = Path(file_name).suffix.lower()
+            mime_type = file.get('mimeType', '')
             
-            if file_ext in CONFIG.gdrive.allowed_text_extensions:
+            # Check if it's a regular text file with allowed extension
+            is_text_file = file_ext in CONFIG.gdrive.allowed_text_extensions
+            # Check if it's a Google Docs file
+            is_google_doc = mime_type in CONFIG.gdrive.google_docs_mime_types
+            
+            if is_text_file or is_google_doc:
                 text_files.append(file)
-                self.logger.debug(f"Text file found: {file_name}")
+                if is_google_doc:
+                    self.logger.debug(f"Google Docs file found: {file_name} (MIME: {mime_type})")
+                else:
+                    self.logger.debug(f"Text file found: {file_name}")
             else:
-                self.logger.debug(f"Skipping non-text file: {file_name} (extension: {file_ext})")
+                self.logger.debug(f"Skipping non-text file: {file_name} (extension: {file_ext}, MIME: {mime_type})")
         
         self.logger.info(f"Found {len(text_files)} text files to download")
         return text_files
@@ -515,6 +528,108 @@ class GoogleDriveDownloader:
             self.logger.error(f"Error downloading {file_name}: {str(e)}")
             return False
     
+    def export_google_doc(self, file_id: str, file_name: str, sequence_number: int = None, mime_type: str = 'application/vnd.google-apps.document') -> bool:
+        """
+        Export a Google Docs file to text format and save it locally.
+        
+        This method exports Google Docs files (Documents, Sheets, Slides) to plain text
+        format using the Google Drive API's export functionality. The exported content
+        is saved to the local filesystem with proper filename handling and organization.
+        
+        The export process:
+        1. Sanitizes filename for filesystem safety
+        2. Creates sequence-numbered subdirectory for chronological ordering
+        3. Checks if file already exists (skips if found)
+        4. Exports Google Doc to plain text using Google Drive API
+        5. Saves exported content to local file
+        6. Verifies export integrity
+        7. Optionally deletes file from Google Drive if configured
+        
+        Args:
+            file_id (str): Google Drive file ID for the Google Doc to export
+            file_name (str): Original name of the Google Doc (will be sanitized)
+            sequence_number (int, optional): Sequence number for chronological ordering
+            mime_type (str): MIME type of the Google Doc. Default: 'application/vnd.google-apps.document'
+            
+        Returns:
+            bool: True if export successful, False otherwise
+            
+        Note:
+            - Requires authentication before calling
+            - Files are organized in sequence-numbered subdirectories for chronological ordering
+            - Exported files are saved with .txt extension
+            - File deletion from Google Drive is optional and configurable
+        """
+        if not self.service:
+            self.logger.error("Not authenticated. Call authenticate() first.")
+            return False
+        
+        # Sanitize filename and add .txt extension for exported content
+        safe_filename = sanitize_filename(file_name)
+        if not safe_filename.endswith('.txt'):
+            safe_filename += '.txt'
+        
+        # Use sequence number for chronological ordering
+        if sequence_number is not None:
+            sequence_dir = self.download_dir / f"{sequence_number:03d}_{file_id}"
+            self.logger.info(f"Using sequence number {sequence_number} for chronological ordering: {file_name}")
+        else:
+            sequence_dir = self.download_dir / file_id
+            self.logger.warning(f"No sequence number provided for {file_name}, using file ID only")
+        
+        file_path = sequence_dir / safe_filename
+        
+        # Check if file already exists
+        if file_path.exists():
+            self.logger.warning(f"Exported file already exists, skipping: {sequence_dir.name}/{safe_filename}")
+            return True
+        
+        self.logger.info(f"Exporting Google Doc: {file_name} -> {sequence_dir.name}/{safe_filename}")
+        
+        try:
+            # Ensure sequence directory exists
+            ensure_directory(sequence_dir)
+            
+            # Export Google Doc to plain text
+            request = self.service.files().export_media(fileId=file_id, mimeType='text/plain')
+            
+            with open(file_path, 'wb') as file_handle:
+                downloader = MediaIoBaseDownload(file_handle, request)
+                done = False
+                
+                while done is False:
+                    status, done = downloader.next_chunk()
+                    if status:
+                        progress = int(status.progress() * 100)
+                        self.logger.debug(f"Export progress: {progress}%")
+            
+            # Verify export
+            if file_path.exists() and file_path.stat().st_size > 0:
+                self.logger.info(f"Successfully exported Google Doc: {sequence_dir.name}/{safe_filename}")
+                
+                # Delete from Google Drive if configured to do so for text files
+                if CONFIG.gdrive.delete_text_from_src:
+                    self.logger.debug("delete_text_from_src is enabled, deleting from Google Drive...")
+                    if self.delete_file_from_gdrive(file_id, file_name):
+                        self.logger.info(f"Google Doc deleted from Google Drive after successful export: {file_name}")
+                    else:
+                        self.logger.warning(f"Failed to delete Google Doc from Google Drive: {file_name}")
+                        # Note: We don't fail the export if deletion fails
+                
+                return True
+            else:
+                self.logger.error(f"Export failed or file is empty: {sequence_dir.name}/{safe_filename}")
+                if file_path.exists():
+                    file_path.unlink()  # Remove empty file
+                return False
+                
+        except HttpError as e:
+            self.logger.error(f"HTTP error exporting Google Doc {file_name}: {str(e)}")
+            return False
+        except Exception as e:
+            self.logger.error(f"Error exporting Google Doc {file_name}: {str(e)}")
+            return False
+    
     def download_all_audio_files(self) -> Tuple[int, int]:
         """
         Download all audio files from configured Google Drive folders.
@@ -620,15 +735,25 @@ class GoogleDriveDownloader:
         for i, file in enumerate(text_files, 1):
             file_id = file['id']
             file_name = file['name']
+            mime_type = file.get('mimeType', '')
             
-            self.logger.info(f"Downloading text file {i}/{total_files} (chronological order): {file_name}")
+            self.logger.info(f"Processing text file {i}/{total_files} (chronological order): {file_name}")
             
-            if self.download_file(file_id, file_name, sequence_number=i, file_type='text'):
-                successful_downloads += 1
+            # Check if it's a Google Docs file that needs to be exported
+            if mime_type in CONFIG.gdrive.google_docs_mime_types:
+                self.logger.info(f"Exporting Google Doc: {file_name} (MIME: {mime_type})")
+                if self.export_google_doc(file_id, file_name, sequence_number=i, mime_type=mime_type):
+                    successful_downloads += 1
+                else:
+                    self.logger.error(f"Failed to export Google Doc: {file_name}")
             else:
-                self.logger.error(f"Failed to download: {file_name}")
+                # Regular text file download
+                if self.download_file(file_id, file_name, sequence_number=i, file_type='text'):
+                    successful_downloads += 1
+                else:
+                    self.logger.error(f"Failed to download: {file_name}")
         
-        self.logger.info(f"Text file download complete: {successful_downloads}/{total_files} files downloaded successfully")
+        self.logger.info(f"Text file processing complete: {successful_downloads}/{total_files} files processed successfully")
         return successful_downloads, total_files
     
     def download_all_other_files(self) -> Tuple[int, int]:
