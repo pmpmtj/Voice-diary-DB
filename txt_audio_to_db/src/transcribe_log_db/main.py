@@ -154,57 +154,6 @@ def _process_text_documents(args, logger) -> dict:
         return {"diary_id": None, "source_file_id": None, "run_id": None, "usage_id": None}
 
 
-def ingest_sample_data(ingestion_handler) -> dict:
-    """
-    Ingest sample transcription data for demonstration.
-    
-    Args:
-        ingestion_handler: Transcription ingestion handler
-        
-    Returns:
-        dict: Result of the ingestion process
-    """
-    logger = get_logger("main")
-    logger.info("Ingesting sample transcription data")
-    
-    # Sample data based on the example_output.json structure
-    sample_data = {
-        "text": "Alô, alô, isto é um teste de gravação em português. Obrigado pela atenção.",
-        "logprobs": None,
-        "usage": {
-            "input_tokens": 126,
-            "output_tokens": 23,
-            "total_tokens": 149,
-            "type": "tokens",
-            "input_token_details": {
-                "audio_tokens": 126,
-                "text_tokens": 0
-            }
-        },
-        "_meta": {
-            "model": "gpt-4o-transcribe",
-            "detect_model": "gpt-4o-mini-transcribe",
-            "source_file": "C:\\Users\\pmpmt\\Scripts_Cursor\\251002-1-Transcribe_audio\\audio-transcriber\\input.m4a",
-            "forced_language": False,
-            "language_routing_enabled": False,
-            "routed_language": None,
-            "probe_seconds": 25,
-            "ffmpeg_used": False
-        }
-    }
-    
-    # Ingest the sample data
-    result = ingestion_handler.ingest_transcription(
-        sample_data,
-        title="Sample Portuguese Transcription",
-        mood="test",
-        tags=["sample", "portuguese", "test"]
-    )
-    
-    logger.info("Sample data ingestion completed")
-    return result
-
-
 def main():
     """Main application entry point."""
     parser = argparse.ArgumentParser(
@@ -329,7 +278,7 @@ Examples:
                 logger.info(f"Unprocessed audio files: {len(to_process)}")
             if not to_process:
                 logger.info("No unprocessed audio files found, continuing to text processing...")
-                last_result = None
+                result = None
             else:
                 if not args.batch:
                     newest = pick_newest(to_process)
@@ -373,8 +322,9 @@ Examples:
                 tags=args.tags
             )
         else:
-            # Ingest sample data
-            result = ingest_sample_data(ingestion_handler)
+            # No input specified and no files found
+            logger.info("No input specified and no files found to process")
+            result = None
         
         # Process text documents (in normal mode, after audio processing)
         if not args.text_only and not args.audio and not args.input:
@@ -383,15 +333,15 @@ Examples:
             _process_text_documents(args, logger)
         
         # Display results
-        logger.info("Ingestion completed successfully!")
-        print("\n=== Ingestion Results ===")
+        logger.info("Processing completed successfully!")
+        print("\n=== Processing Results ===")
         if result:
             print(f"Diary ID: {result['diary_id']}")
             print(f"Source File ID: {result['source_file_id']}")
             print(f"Transcription Run ID: {result['run_id']}")
             print(f"Usage ID: {result['usage_id']}")
         else:
-            print("No files were processed (all files were already processed)")
+            print("No new files were processed (all files were already processed or no files found)")
         print("========================\n")
         
     except Exception as e:
